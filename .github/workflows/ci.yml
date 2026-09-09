@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DBT_PROFILES_DIR: ${{ github.workspace }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dbt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check the seeds are reproducible
+        run: |
+          python scripts/generate_seeds.py
+          git diff --exit-code seeds/ \
+            || (echo "seeds/ differ from what the generator produces" && exit 1)
+
+      - name: Load seeds
+        run: dbt seed
+
+      - name: Build and test everything
+        run: dbt build
+
+      # A second build exercises the incremental branch of fct_orders, which
+      # the first run never touches. Most incremental bugs only appear here.
+      - name: Build again to exercise the incremental path
+        run: dbt build
+
+      - name: Check docs compile
+        run: dbt docs generate

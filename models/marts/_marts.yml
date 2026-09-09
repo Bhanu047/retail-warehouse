@@ -1,0 +1,57 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: >
+      Customer dimension with order history attached. Wide on purpose: the
+      questions asked of it should not need a join.
+    columns:
+      - name: customer_id
+        data_tests: [unique, not_null]
+      - name: lifetime_value
+        data_tests: [not_null, positive_or_zero]
+      - name: orders_total
+        data_tests: [not_null, positive_or_zero]
+      - name: cancellation_rate_pct
+        description: Null for customers who have never ordered, never zero.
+
+  - name: dim_products
+    description: Product dimension with units sold and revenue attached.
+    columns:
+      - name: product_id
+        data_tests: [unique, not_null]
+      - name: revenue
+        data_tests: [not_null, positive_or_zero]
+      - name: units_sold
+        data_tests: [not_null, positive_or_zero]
+
+  - name: fct_orders
+    description: >
+      Order fact, one row per order. Incremental with a three-day lookback
+      so late-arriving orders are picked up rather than silently missed.
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: customer_id
+        data_tests: [not_null]
+      - name: country_code
+        description: UNKNOWN when the customer export has not caught up.
+        data_tests: [not_null]
+      - name: is_orphan_order
+        description: True when the order references a customer we do not have.
+      - name: order_total
+        data_tests: [not_null, positive_or_zero]
+      - name: ordered_at
+        data_tests: [not_null, not_in_the_future]
+
+  - name: fct_daily_revenue
+    description: >
+      Daily revenue. Built from fct_orders so the definition of revenue is
+      inherited rather than restated.
+    columns:
+      - name: ordered_date
+        data_tests: [unique, not_null]
+      - name: revenue
+        data_tests: [not_null, positive_or_zero]
+      - name: cancellation_rate_pct
+        data_tests: [not_null, positive_or_zero]

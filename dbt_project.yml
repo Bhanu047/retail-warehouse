@@ -1,0 +1,58 @@
+name: retail_warehouse
+version: "1.0.0"
+config-version: 2
+
+profile: retail_warehouse
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  retail_warehouse:
+    # Staging is cheap to rebuild and read once by the layer above, so a
+    # view costs nothing and always reflects the source.
+    staging:
+      +materialized: view
+      +schema: staging
+    # Intermediate models are joined repeatedly; materialising them once
+    # beats recomputing the join in every mart that needs it.
+    intermediate:
+      +materialized: ephemeral
+    marts:
+      +materialized: table
+      +schema: marts
+
+seeds:
+  retail_warehouse:
+    +schema: raw
+    raw_customers:
+      +column_types:
+        customer_id: integer
+        signup_date: date
+    raw_products:
+      +column_types:
+        product_id: integer
+        unit_price_cents: integer
+    raw_orders:
+      +column_types:
+        order_id: integer
+        customer_id: integer
+        ordered_at: timestamp
+    raw_order_items:
+      +column_types:
+        order_item_id: integer
+        order_id: integer
+        product_id: integer
+        quantity: integer
+        unit_price_cents: integer
+        discount_cents: integer
+
+snapshots:
+  retail_warehouse:
+    +target_schema: snapshots

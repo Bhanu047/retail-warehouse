@@ -1,0 +1,16 @@
+# Checked in deliberately. DuckDB is a local file, so there are no
+# credentials here and `make build` works on a fresh clone with no setup.
+# A real warehouse would keep this out of the repo and read credentials
+# from the environment instead.
+#
+# One file target rather than a separate in-memory CI target: seeding and
+# building are two commands, so an in-memory database would be discarded
+# between them.
+retail_warehouse:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: warehouse.duckdb
+      threads: 4
+      schema: main

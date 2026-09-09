@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Landed exports from the order system. Declared as a source rather
+      than referenced directly so that lineage starts here and a schema
+      change upstream shows up as one edit in one file.
+    schema: raw
+    tables:
+      - name: raw_customers
+        description: Customer export. Re-exports rows, so it is not unique on customer_id.
+      - name: raw_products
+        description: Product catalogue. Prices in integer cents.
+      - name: raw_orders
+        description: One row per order header.
+      - name: raw_order_items
+        description: One row per line on an order.
